@@ -18,6 +18,14 @@ function setGameData(gameData = {}){
     console.error(e);
   }
 }
+function calcPlayerStats(players, options){
+  let returnPlayers = {}
+  players.forEach( player => {
+    let pId = player.allyCode || player.playerId
+    returnPlayers[pId] = calcRosterStats(player.rosterUnit, options);
+  })
+  return returnPlayers
+}
 function calcRosterStats(units, options = {}) {
   let returnUnits = {};
   if (units.constructor === Array) { // units *should* be formatted like /player.roster
@@ -738,4 +746,9 @@ function setSkills( unitID, val ) {
     return unitData[ unitID ].skills.map(skill => { return {id: skill.id, tier: Math.min(val, skill.maxTier)}; });
   else // expecting an array of skill objects
     return val;
+}
+module.exports = {
+  setGameData: setGameData,
+  calcPlayerStats: calcPlayerStats,
+  calcRosterStats: calcRosterStats
 }
