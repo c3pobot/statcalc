@@ -1,8 +1,10 @@
 'use strict'
-let unitData, modSetData, gearData, crTables, gpTables, relicData, unitDefMap, statDefMap, modDefData;
+let unitData, modSetData, gearData, crTables, gpTables, relicData, unitDefMap, statDefMap, modDefMap;
 const DEFAULT_MOD_TIER = 5;
 const DEFAULT_MOD_LEVEL = 15;
 const DEFAULT_MOD_PIPS = 6;
+const formatUnit = require('./formatUnit')
+const mapStats = require('./mapStats')
 function setGameData(gameData = {}){
   try{
     if(gameData?.unitData){
@@ -14,13 +16,23 @@ function setGameData(gameData = {}){
       relicData = gameData.relicData;
       unitDefMap = gameData.unitDefMap;
       statDefMap = gameData.statDefMap;
-      modDefData = gameData.modDefData;
+      modDefMap = gameData.modDefMap;
     }
     if(unitData) return true
   }catch(e){
     console.error(e);
   }
 }
+function calcGuildStats(players = []){
+  let guild = {}
+  for(let i in players){
+    if(!players[i].rosterUnit || !players[i].playerId) continue;
+    let roster = calcRosterStats(players[i].rosterUnit)
+    if(roster) guild[players[i].playerId] = roster
+  }
+  return guild
+}
+
 function calcRosterStats(units = []) {
   let returnUnits = {}, sixModCount = 0, zetaCount = 0, omiCount = {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0};
   let ships = [], crew = {};
@@ -35,7 +47,7 @@ function calcRosterStats(units = []) {
       crew[ defID ] = unit; // add to crew list to find quickly for ships
        let unitStats = calcCharStats(unit);
        if(!unitStats) return
-       let tempUnit = formatUnit(defID, unitStats)
+       let tempUnit = formatUnit(defID, unitStats, {unitDefMap: unitDefMap})
        if(!tempUnit) return
 
        sixModCount += unitStats.sixModCount
@@ -58,33 +70,14 @@ function calcRosterStats(units = []) {
     let crw = unitData[ defID ].crew.map(id => crew[id])
     let unitStats = calcShipStats(ship, crw);
     if(!unitStats) return
-    let tempUnit = formatUnit(defID, unitStats)
+    let tempUnit = formatUnit(defID, unitStats, {unitDefMap: unitDefMap})
     if(!tempUnit) return
     returnUnits [ defID ] = tempUnit.unit
   }
   return {sixModCount: sixModCount, zetaCount: zetaCount, omiCount: omiCount, roster: returnUnits};
 }
-function formatUnit(defID, data = {}){
-  let res = {zetaCount: 0, omiCount: {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0}}
-  let unit = JSON.parse(JSON.stringify(unitDefMap[ defID ]))
-  unit.growthModifiers = data.growthModifiers
-  unit.stats = data.stats
-  unit.gp = data.gp
-  if(unit.combatType === 1) unit.mods = data.mods
-  for(let i in data.skills){
-    let s = data.skills[i]
-    if(!unit.skill[s.id]) continue;
-    unit.skill[s.id].tier = s.tier
-    if(unit.combatType === 2) continue;
-    if(unit.skill[s.id].isZeta && +s.tier >= unit.skill[s.id].zetaTier) res.zetaCount++
-    if(unit.skill[s.id].isOmi && s.tier >= unit.skill[s.id].omiTier){
-      if(res.omiCount[unit.skill[s.id].type] >= 0) res.omiCount[unit.skill[s.id].type]++
-      res.omiCount.total++
-    }
-  }
-  res.unit = unit
-  return res
-}
+
+
 function calcCharStats(unit) {
   let char = useValuesChar(unit);
 
@@ -94,7 +87,7 @@ function calcCharStats(unit) {
   stats.mods = calculateModStats(stats.base, char)
   stats = formatStats(stats, char.level);
 
-  res.stats = mapStats(stats);
+  res.stats = mapStats(stats, {statDefMap: statDefMap});
   res.gp = calcCharGP(char);
   res.growthModifiers = stats.growthModifiers
   res.skills = char.skills
@@ -110,7 +103,7 @@ function calcShipStats(unit, crewMember) {
   stats = getShipRawStats(ship, crew);
   stats = calculateBaseStats(stats, ship.level, ship.defId);
   stats = formatStats(stats, ship.level, { percentVals: true, gameStyle: true });
-  res.stats = mapStats(stats)
+  res.stats = mapStats(stats, {statDefMap: statDefMap})
   res.gp = calcShipGP(ship, crew);
   res.growthModifiers = stats.growthModifiers
   res.skills = ship.skills
@@ -297,7 +290,7 @@ function calculateModStats(baseStats, char) {
     char.sixModCount = 0
     char.tempMods = []
     char.equippedStatMod.forEach( mod => {
-      let modDef = modDefData[mod.definitionId]
+      let modDef = modDefMap[mod.definitionId]
       if(modDef){
         if(modDef.rarity === 6) char.sixModCount++
         let tempMod = {
@@ -394,24 +387,7 @@ function calculateModStats(baseStats, char) {
 
   return modStats;
 }
-function mapStats(stats){
-  let res = {}, modStatId = {21: 14, 22: 15, 35: 39, 36: 40}
-  //i is base/mods/final etc
-  for(let i in stats){
 
-    if(i === 'growthModifiers') continue
-    //s is statId
-    for(let s in stats[i]){
-      if(!stats[i][s]) continue
-      let statId = s
-      if(i === 'mods' && modStatId[s]) statId = modStatId[s]
-      let statMap = statDefMap[statId]
-      if(!res[statId]) res[statId] = { nameKey: statMap.nameKey, pct: statMap.pct,  base: 0, crew: 0, mods: 0, final: 0 }
-      res[statId][i] = stats[i][s]
-    }
-  }
-  return res
-}
 
 // Apply following flags to adjust object format
 //   -scaled
@@ -681,5 +657,6 @@ function setSkills( unitID, val ) {
 }
 module.exports = {
   setGameData: setGameData,
-  calcRosterStats: calcRosterStats
+  calcRosterStats: calcRosterStats,
+  calcGuildStats: calcGuildStats
 }
