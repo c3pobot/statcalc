@@ -36,7 +36,7 @@ function calcGuildStats(players = []){
 }
 
 function calcRosterStats(units = []) {
-  let returnUnits = {}, totalGp = 0, dataCount = { omiCount: {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0}, modCount: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, zetaCount: 0 }
+  let returnUnits = {}, totalGp = 0, dataCount = { omiCount: {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0}, modCount: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, zetaCount: 0, glCount: {} }
   let ships = [], crew = {};
   // get character stats
   for(let i in units){
@@ -44,6 +44,7 @@ function calcRosterStats(units = []) {
     let defID = unit.defId || unit.definitionId.split(':')[0];
     if (!unit || !unitData[defID] || !unitDefMap[ defID ]) return;
     if (unitData[ defID ].combatType == 2) { // is ship
+      unit.combatType = 2
       ships.push( unit );
     } else { // is character
 
@@ -52,7 +53,11 @@ function calcRosterStats(units = []) {
        if(!unitStats) return
        let tempUnit = formatUnit(defID, unitStats, dataCount, { unitDefMap: unitDefMap, statDefMap: statDefMap, modDefMap: modDefMap })
        if(!tempUnit) return
-
+       if(tempUnit.isGL){
+         console.log(tempUnit.baseId)
+         if(!dataCount.glCount[tempUnit.baseId]) dataCount.glCount[tempUnit.baseId] = 0,
+         dataCount.glCount[tempUnit.baseId]++
+       }
        //sixModCount += tempUnit.sixModCount
        returnUnits [ defID ] = tempUnit
        unit.combatType = 1
@@ -61,8 +66,7 @@ function calcRosterStats(units = []) {
        if(unit.purchasedAbilityId?.length === 0) returnUnits [ defID ].ultimate = {}
     }
   };
-  dataCount.modQuality = calcModQuality(units.filter(x=>x.combatType === 1), 999)
-  dataCount.top80ModQuality = calcModQuality(units.filter(x=>x.combatType === 1), 80)
+
   // get ship stats
   for(let i in ships){
     let ship = ships[i]
@@ -76,8 +80,12 @@ function calcRosterStats(units = []) {
     returnUnits [ defID ] = tempUnit
     totalGp += tempUnit.gp
   }
-  dataCount.gearQuality = calcGearQuality(units.filter(x=>x.combatType === 1), totalGp)
-  dataCount.totalQuality = +(dataCount.gearQuality + dataCount.modQuality).toFixed(2)
+  let quality = {}
+  quality.mods = calcModQuality(units.filter(x=>x.combatType === 1), 999)
+  quality.top = calcModQuality(units.filter(x=>x.combatType === 1), 80)
+  quality.gear = calcGearQuality(units.filter(x=>x.combatType === 1), totalGp)
+  quality.total = +(quality.gear + quality.mods).toFixed(2)
+  dataCount.quality = quality
   dataCount.roster = returnUnits
   return dataCount
 }
