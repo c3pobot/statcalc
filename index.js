@@ -5,6 +5,8 @@ const DEFAULT_MOD_LEVEL = 15;
 const DEFAULT_MOD_PIPS = 6;
 const formatUnit = require('./formatUnit')
 const mapStats = require('./mapStats')
+const calcGearQuality = require('./calcGearQuality')
+const calcModQuality = require('./calcModQuality')
 function setGameData(gameData = {}){
   try{
     if(gameData?.unitData){
@@ -34,7 +36,7 @@ function calcGuildStats(players = []){
 }
 
 function calcRosterStats(units = []) {
-  let returnUnits = {}, sixModCount = 0, zetaCount = 0, omiCount = {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0};
+  let returnUnits = {}, totalGp = 0, dataCount = { omiCount: {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0}, modCount: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, zetaCount: 0 }
   let ships = [], crew = {};
   // get character stats
   for(let i in units){
@@ -44,24 +46,23 @@ function calcRosterStats(units = []) {
     if (unitData[ defID ].combatType == 2) { // is ship
       ships.push( unit );
     } else { // is character
+
       crew[ defID ] = unit; // add to crew list to find quickly for ships
        let unitStats = calcCharStats(unit);
        if(!unitStats) return
-       let tempUnit = formatUnit(defID, unitStats, {unitDefMap: unitDefMap})
+       let tempUnit = formatUnit(defID, unitStats, dataCount, { unitDefMap: unitDefMap, statDefMap: statDefMap, modDefMap: modDefMap })
        if(!tempUnit) return
 
-       sixModCount += unitStats.sixModCount
-       returnUnits [ defID ] = tempUnit.unit
+       //sixModCount += tempUnit.sixModCount
+       returnUnits [ defID ] = tempUnit
+       unit.combatType = 1
+       unit.gp = tempUnit.gp
+       totalGp += tempUnit.gp
        if(unit.purchasedAbilityId?.length === 0) returnUnits [ defID ].ultimate = {}
-       zetaCount += tempUnit.zetaCount
-       omiCount.total += tempUnit.omiCount.total
-       omiCount.tb += tempUnit.omiCount.tb
-       omiCount.tw += tempUnit.omiCount.tw
-       omiCount.ga += tempUnit.omiCount.ga
-       omiCount.cq += tempUnit.omiCount.cq
-       omiCount.raid += tempUnit.omiCount.raid
     }
   };
+  dataCount.modQuality = calcModQuality(units.filter(x=>x.combatType === 1), 999)
+  dataCount.top80ModQuality = calcModQuality(units.filter(x=>x.combatType === 1), 80)
   // get ship stats
   for(let i in ships){
     let ship = ships[i]
@@ -70,11 +71,15 @@ function calcRosterStats(units = []) {
     let crw = unitData[ defID ].crew.map(id => crew[id])
     let unitStats = calcShipStats(ship, crw);
     if(!unitStats) return
-    let tempUnit = formatUnit(defID, unitStats, {unitDefMap: unitDefMap})
+    let tempUnit = formatUnit(defID, unitStats, dataCount, {unitDefMap: unitDefMap})
     if(!tempUnit) return
-    returnUnits [ defID ] = tempUnit.unit
+    returnUnits [ defID ] = tempUnit
+    totalGp += tempUnit.gp
   }
-  return {sixModCount: sixModCount, zetaCount: zetaCount, omiCount: omiCount, roster: returnUnits};
+  dataCount.gearQuality = calcGearQuality(units.filter(x=>x.combatType === 1), totalGp)
+  dataCount.totalQuality = +(dataCount.gearQuality + dataCount.modQuality).toFixed(2)
+  dataCount.roster = returnUnits
+  return dataCount
 }
 
 
@@ -91,8 +96,7 @@ function calcCharStats(unit) {
   res.gp = calcCharGP(char);
   res.growthModifiers = stats.growthModifiers
   res.skills = char.skills
-  res.sixModCount = char.sixModCount
-  res.mods = char.tempMods
+  res.unit = unit
   return res
 }
 
@@ -107,6 +111,7 @@ function calcShipStats(unit, crewMember) {
   res.gp = calcShipGP(ship, crew);
   res.growthModifiers = stats.growthModifiers
   res.skills = ship.skills
+  res.unit = unit
   return res
 }
 
@@ -240,53 +245,7 @@ function calculateModStats(baseStats, char) {
   // calculate raw totals on mods
   const setBonuses = {};
   const rawModStats = {};
-  if (char.mods) {
-    char.mods.forEach(mod => {
-      if (!mod.set) { return; } // ignore if empty mod (/units format only)
-
-      // add to set bonuses counters (same for both formats)
-      if (setBonuses[ mod.set ]) {
-        // set bonus already found, increment
-        ++(setBonuses[ mod.set ].count);
-        if (mod.level == 15) ++(setBonuses[mod.set].maxLevel);
-      } else {
-        // new set bonus, create object
-        setBonuses[ mod.set ] = { count: 1, maxLevel: mod.level == 15 ? 1 : 0 };
-      }
-
-      // add Primary/Secondary stats to data
-      if (mod.stat) {
-        // using /units format
-        mod.stat.forEach( stat => {
-          rawModStats[ stat[0] ] = (rawModStats[ stat[0] ] || 0) + scaleStatValue(stat[0], stat[1]);
-        });
-      } else {
-        // using /player.roster format
-        let stat = mod.primaryStat,
-            i = 0;
-        do {
-          rawModStats[ stat.unitStat ] = (rawModStats[ stat.unitStat ] || 0) + scaleStatValue(stat.unitStat, stat.value);
-          stat = mod.secondaryStat[i];
-        } while ( i++ < mod.secondaryStat.length );
-      }
-
-      function scaleStatValue(statID, value) {
-        // convert stat value from displayed value to "unscaled" value used in calculations
-        switch (statID) {
-          case 1:  // Health
-          case 5:  // Speed
-          case 28: // Protection
-          case 41: // Offense
-          case 42: // Defense
-            // Flat stats
-            return value * 1e8;
-          default:
-            // Percent stats
-            return value * 1e6;
-        }
-      }
-    });
-  } else if (char.equippedStatMod) {
+  if (char.equippedStatMod) {
     char.sixModCount = 0
     char.tempMods = []
     char.equippedStatMod.forEach( mod => {
