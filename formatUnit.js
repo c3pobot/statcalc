@@ -18,9 +18,9 @@ function formatUnit(defID, data = {}, dataCount = {}, gameData = {}){
       dataCount.omiCount.total++
     }
   }
-  if(unit.combatType === 1 && data.mods){
+  if(unit.combatType === 1){
     if(data.unit.equippedStatMod) unit.mods = formatMods(data.unit.equippedStatMod, dataCount, gameData)
-    unit.relicTier = data.unit.relic.currentTier
+    unit.relicTier = data.unit.relic.currentTier - 2
     unit.gearTier = data.unit.currentTier
   }
   return unit
