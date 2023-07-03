@@ -1,9 +1,9 @@
 'use strict'
 function updateCounts(value, dataCount = {}){
-  if(value >= 25 ) dataCount.modCount['25']++
-  if(value >= 20 && value < 25 ) dataCount.modCount['20']++
-  if(value >= 15 && value < 20 ) dataCount.modCount['15']++
-  if(value >= 10 && value < 15 ) dataCount.modCount['10']++
+  if(value >= 25 ) dataCount.mod['25']++
+  if(value >= 20 && value < 25 ) dataCount.mod['20']++
+  if(value >= 15 && value < 20 ) dataCount.mod['15']++
+  if(value >= 10 && value < 15 ) dataCount.mod['10']++
 }
 function formatSecondaryStat(mods = [], dataCount = {}, statMap){
   let res = []
@@ -43,7 +43,7 @@ function formatMods(mods, dataCount = {}, gameData = {}){
     }
     mod.secondaryStat = formatSecondaryStat(mods[i].secondaryStat, dataCount, statMap)
     res[mod.slot] = mod
-    if(mod.rarity === 6) dataCount.modCount.r6++
+    if(mod.rarity === 6) dataCount.mod.r6++
   }
   return res
 }

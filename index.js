@@ -36,7 +36,8 @@ function calcGuildStats(players = []){
 }
 
 function calcRosterStats(units = []) {
-  let returnUnits = {}, totalGp = 0, dataCount = { omiCount: {total: 0, tb: 0, tw: 0, ga: 0, cq: 0, raid: 0}, modCount: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, zetaCount: 0, glCount: {} }
+  let returnUnits = {}, totalGp = 0
+  let dataCount = { relic: { total: 0 }, omi: { total: 0 },  mod: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, gear: {}, rarity: { }, gl: {}, zeta: 0 }
   let ships = [], crew = {};
   // get character stats
   for(let i in units){
@@ -54,9 +55,8 @@ function calcRosterStats(units = []) {
        let tempUnit = formatUnit(defID, unitStats, dataCount, { unitDefMap: unitDefMap, statDefMap: statDefMap, modDefMap: modDefMap })
        if(!tempUnit) return
        if(tempUnit.isGL){
-         console.log(tempUnit.baseId)
-         if(!dataCount.glCount[tempUnit.baseId]) dataCount.glCount[tempUnit.baseId] = 0,
-         dataCount.glCount[tempUnit.baseId]++
+         if(!dataCount.gl[tempUnit.baseId]) dataCount.gl[tempUnit.baseId] = 0,
+         dataCount.gl[tempUnit.baseId]++
        }
        //sixModCount += tempUnit.sixModCount
        returnUnits [ defID ] = tempUnit
@@ -87,7 +87,7 @@ function calcRosterStats(units = []) {
   quality.total = +(quality.gear + quality.mods).toFixed(2)
   dataCount.quality = quality
   dataCount.roster = returnUnits
-  return dataCount
+  return { summary: dataCount, roster: returnUnits }
 }
 
 
