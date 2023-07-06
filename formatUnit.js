@@ -4,7 +4,7 @@ function formatUnit(defID, data = {}, dataCount = {}, gameData = {}){
 
   unit.gp = data.gp
   unit.rarity = data.unit.currentRarity
-  unit.level = data.unit.level
+  unit.level = data.unit.currentLevel
 
   if(!dataCount.rarity[unit.rarity]) dataCount.rarity[unit.rarity] = { total: 0, 1: 0, 2: 0}
   dataCount.rarity[unit.rarity][unit.combatType]++
@@ -20,7 +20,7 @@ function formatUnit(defID, data = {}, dataCount = {}, gameData = {}){
         if(!dataCount.relic[unit.relicTier]) dataCount.relic[unit.relicTier] = 0
         dataCount.relic[unit.relicTier] ++
         dataCount.relic.total++
-      }      
+      }
     }else{
       unit.relicTier = 0
     }
