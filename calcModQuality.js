@@ -7,7 +7,8 @@ module.exports = (units, num) =>{
     const sortedUnits = sorter([{column: 'gp', order: 'descending'}], units)
     let tempUnits = sortedUnits
     if(sortedUnits.length > num) tempUnits = sortedUnits.slice(0, num)
-    for(let u in tempUnits){
+    let u = tempUnits.length
+    while(u--){
       for(let m in tempUnits[u].equippedStatMod){
         count += +tempUnits[u].equippedStatMod[m].secondaryStat.filter(x=>x.stat.unitStatId == 5 && x.stat.statValueDecimal > 140000).length
       }

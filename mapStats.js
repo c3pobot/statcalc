@@ -10,7 +10,7 @@ function mapStats(stats, gameData = {}){
       let statId = s
       if(i === 'mods' && modStatId[s]) statId = modStatId[s]
       let statMap = gameData.statDefMap[statId]
-      if(!res[statId]) res[statId] = { nameKey: statMap.nameKey, pct: statMap.pct,  base: 0, crew: 0, mods: 0, final: 0 }
+      if(!res[statId]) res[statId] = { id: +statId, nameKey: statMap.nameKey, pct: statMap.pct,  base: 0, crew: 0, mods: 0, final: 0 }
       let stat = stats[i][s]
       if(statMap.pct) stat = stat * 100
       res[statId][i] = stat

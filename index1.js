@@ -43,15 +43,14 @@ function calcGuildStats(players = []){
 
 function calcRosterStats(units = []) {
   try{
-    let returnUnits = {}, totalGp = 0
+    let returnUnits = {}, totalGp = 0, charCount = 0, shipCount = 0, charArray = [], shipArray = []
     let dataCount = { relic: { total: 0 }, omi: { total: 0 },  mod: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, gear: {}, rarity: { }, gl: {}, zeta: 0 }
     let ships = [], crew = {};
     // get character stats
-    let i = units.length
-    while(i--){
-      let unit = units[i]
+    function calcRosterChar(unit){
       let defID = unit.defId || unit.definitionId.split(':')[0];
       if (!unit || !unitData[defID] || !unitDefMap[ defID ]) return;
+      crew[ defID ] = unit;
       if (unitData[ defID ].combatType == 2) { // is ship
         unit.combatType = 2
         ships.push( unit );
@@ -64,7 +63,7 @@ function calcRosterStats(units = []) {
          if(!tempUnit) return
          if(tempUnit.isGL){
            if(!dataCount.gl[tempUnit.baseId]) dataCount.gl[tempUnit.baseId] = 0,
-           ++dataCount.gl[tempUnit.baseId]
+           dataCount.gl[tempUnit.baseId]++
          }
          //sixModCount += tempUnit.sixModCount
          returnUnits [ defID ] = tempUnit
@@ -72,13 +71,15 @@ function calcRosterStats(units = []) {
          unit.gp = tempUnit.gp
          totalGp += tempUnit.gp
          if(unit.purchasedAbilityId?.length === 0) delete returnUnits [ defID ].ultimate
+         ++charCount
       }
-    };
+    }
 
-    // get ship stats
-    let s = ships.length
-    while(s--){
-      let ship = ships[s]
+    each(units, (unit)=>{
+      calcRosterChar(unit)
+    })
+
+    function calcRosterShip(ship){
       let defID = ship.defId || ship.definitionId.split(':')[0];
       if (!ship || !unitData[defID] || !unitDefMap[ defID ]) return;
       let crw = unitData[ defID ].crew.map(id => crew[id])
@@ -88,7 +89,13 @@ function calcRosterStats(units = []) {
       if(!tempUnit) return
       returnUnits [ defID ] = tempUnit
       totalGp += tempUnit.gp
+      ++shipCount
     }
+    each(ships, (ship)=>{
+      calcRosterShip(ship)
+    })
+    console.log(charCount + shipCount)
+    console.log(units.length)
     let quality = {}
     quality.mods = calcModQuality(units.filter(x=>x.combatType === 1), 999)
     quality.top = calcModQuality(units.filter(x=>x.combatType === 1), 80)
