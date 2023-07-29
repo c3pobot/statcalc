@@ -44,7 +44,11 @@ function calcGuildStats(players = []){
 function calcRosterStats(units = []) {
   try{
     let returnUnits = {}, totalGp = 0
-    let dataCount = { relic: { total: 0 }, omi: { total: 0 },  mod: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, gear: {}, rarity: { }, gl: {}, zeta: 0 }
+    let dataCount = { mod: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, gl: { total: 0 }, zeta: 0 }
+    dataCount.relic = { total: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 }
+    dataCount.omi = { total: 0, tw: 0, ga: 0, raid: 0, tb: 0, cq: 0}
+    dataCount.gear = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0 }
+    dataCount.rarity = { 1: {total: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 }, 2: {total: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 } }
     let ships = [], crew = {};
     // get character stats
     let i = units.length
@@ -65,6 +69,7 @@ function calcRosterStats(units = []) {
          if(tempUnit.isGL){
            if(!dataCount.gl[tempUnit.baseId]) dataCount.gl[tempUnit.baseId] = 0,
            ++dataCount.gl[tempUnit.baseId]
+           ++dataCount.gl.total
          }
          //sixModCount += tempUnit.sixModCount
          returnUnits [ defID ] = tempUnit
