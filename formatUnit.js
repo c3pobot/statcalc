@@ -35,7 +35,7 @@ function formatUnit(defID, data = {}, dataCount = {}, gameData = {}){
   unit.sort = (unit.gearTier || 0) + (unit.relicTier || 0) + ((unit.gp || 0) / 100000000)
   unit.stats = data.stats
   unit.growthModifiers = data.growthModifiers
-
+  
   let i = data.skills.length
   while(i--){
     let s = data.skills[i]

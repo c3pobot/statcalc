@@ -1,5 +1,5 @@
 'use strict'
-const { each } = require('async')
+
 let unitData, modSetData, gearData, crTables, gpTables, relicData, unitDefMap, statDefMap, modDefMap;
 const DEFAULT_MOD_TIER = 5;
 const DEFAULT_MOD_LEVEL = 15;
@@ -24,20 +24,6 @@ function setGameData(gameData = {}){
     if(unitData) return true
   }catch(e){
     throw(e);
-  }
-}
-function calcGuildStats(players = []){
-  try{
-    let guild = {}
-    let i = players.length
-    while(i--){
-      if(!players[i].rosterUnit || !players[i].playerId) continue;
-      let roster = calcRosterStats(players[i].rosterUnit)
-      if(roster) guild[players[i].playerId] = roster
-    }
-    return guild
-  }catch(e){
-    throw(e)
   }
 }
 
@@ -75,6 +61,9 @@ function calcRosterStats(units = []) {
          returnUnits [ defID ] = tempUnit
          unit.combatType = 1
          unit.gp = tempUnit.gp
+         unit.baseId = defID
+         unit.alignment = tempUnit.alignment
+         unit.sort = tempUnit.sort
          totalGp += tempUnit.gp
          if(unit.purchasedAbilityId?.length === 0) delete returnUnits [ defID ].ultimate
       }
@@ -92,6 +81,10 @@ function calcRosterStats(units = []) {
       let tempUnit = formatUnit(defID, unitStats, dataCount, {unitDefMap: unitDefMap})
       if(!tempUnit) return
       returnUnits [ defID ] = tempUnit
+      ship.gp = tempUnit.gp
+      ship.baseId = defID
+      ship.alignment = tempUnit.alignment
+      ship.sort = tempUnit.sort
       totalGp += tempUnit.gp
     }
     let quality = {}
@@ -116,6 +109,7 @@ function calcCharStats(unit) {
     stats = calculateBaseStats(stats, char.level, char.defId);
     stats.mods = calculateModStats(stats.base, char)
     stats = formatStats(stats, char.level);
+    unit.stats = stats
     res.stats = mapStats(stats, {statDefMap: statDefMap});
     res.gp = calcCharGP(char);
     res.growthModifiers = stats.growthModifiers
@@ -134,6 +128,7 @@ function calcShipStats(unit, crewMember) {
     stats = getShipRawStats(ship, crew);
     stats = calculateBaseStats(stats, ship.level, ship.defId);
     stats = formatStats(stats, ship.level, { percentVals: true, gameStyle: true });
+    unit.stats = stats
     res.stats = mapStats(stats, {statDefMap: statDefMap})
     res.gp = calcShipGP(ship, crew);
     res.growthModifiers = stats.growthModifiers
@@ -682,6 +677,5 @@ function setSkills( unitID, val ) {
 }
 module.exports = {
   setGameData: setGameData,
-  calcRosterStats: calcRosterStats,
-  calcGuildStats: calcGuildStats
+  calcRosterStats: calcRosterStats
 }
