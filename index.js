@@ -81,10 +81,12 @@ function calcRosterStats(units = []) {
       let tempUnit = formatUnit(defID, unitStats, dataCount, {unitDefMap: unitDefMap})
       if(!tempUnit) return
       returnUnits [ defID ] = tempUnit
-      ship.gp = tempUnit.gp
-      ship.baseId = defID
-      ship.alignment = tempUnit.alignment
-      ship.sort = tempUnit.sort
+      ships[s].stats = ship.stats
+      ships[s].gp = tempUnit.gp
+      ships[s].baseId = defID
+      ships[s].alignment = tempUnit.alignment
+      ships[s].sort = tempUnit.sort
+      ships[s].combatType = 2
       totalGp += tempUnit.gp
     }
     let quality = {}
