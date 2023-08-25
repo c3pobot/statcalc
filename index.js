@@ -41,7 +41,7 @@ function calcRosterStats(units = []) {
     while(i--){
       let unit = units[i]
       let defID = unit.defId || unit.definitionId.split(':')[0];
-      if (!unit || !unitData[defID] || !unitDefMap[ defID ]) return;
+      if (!unit || !unitData?.[defID] || !unitDefMap?.[ defID ]) return;
       if (unitData[ defID ].combatType == 2) { // is ship
         unit.combatType = 2
         ships.push( unit );
