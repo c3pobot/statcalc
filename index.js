@@ -102,9 +102,9 @@ function calcRosterStats(units = []) {
 }
 
 
-function calcCharStats(unit) {
+function calcCharStats(unit, options = {}) {
   try{
-    let char = useValuesChar(unit);
+    let char = useValuesChar(unit, options.useValues);
 
     let stats = {}, res = {};
     stats = getCharRawStats(char);
@@ -123,9 +123,9 @@ function calcCharStats(unit) {
   }
 }
 
-function calcShipStats(unit, crewMember) {
+function calcShipStats(unit, crewMember, options = {}) {
   try{
-    let {ship, crew} = useValuesShip(unit, crewMember);
+    let {ship, crew} = useValuesShip(unit, crewMember, options.useValues);
     let stats = {}, res = {};
     stats = getShipRawStats(ship, crew);
     stats = calculateBaseStats(stats, ship.level, ship.defId);
@@ -628,32 +628,49 @@ function convertFlatCritAvoidToPercent(value, scale = 1) {
 
 
 // build character from 'useValues' option
-function useValuesChar(char) {
-  return {
-    defId: char.definitionId.split(":")[0],
-    rarity: char.currentRarity,
-    level: char.currentLevel,
-    gear: char.currentTier,
-    equipped: char.equipment,
-    equippedStatMod: char.equippedStatMod,
-    relic: char.relic,
-    skills: char.skill.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; }),
-    purchasedAbilityId: char.purchasedAbilityId
+function useValuesChar(unit, useValues) {
+  let char = {
+    defId: unit?.definitionId.split(":")[0] || unit?.baseId,
+    rarity: unit?.currentRarity,
+    level: unit?.currentLevel,
+    gear: unit?.currentTier,
+    equipped: unit?.equipment,
+    equippedStatMod: unit?.equippedStatMod,
+    relic: unit?.relic,
+    skills: unit?.skill?.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; }),
+    purchasedAbilityId: unit.purchasedAbilityId || []
     // TODO set purchasedAbilityId
   };
+  if(!useValues) return res
+  let skillLevel = useValues?.char?.skills || 'max'
+  let modifiedUnit = {
+    defId: char.defId,
+    rarity: useValues?.char?.rarity || char.currentRarity,
+    level: useValues?.char?.level || char.currentLevel || 85,
+    gear: useValues?.char?.gear || char.currentTier,
+    equipped: useValues?.char?.equipped || char.equipment,
+    equippedStatMod: useValues?.char?.mods || char.equippedStatMod,
+    relic: useValues?.char?.relc || char.relic,
+    skills: setSkills(char.defId, skillLevel || char.skills || []),
+    purchasedAbilityId: char.purchasedAbilityId || []
+  }
+  return modifiedUnit
 }
 
 // build ship/crew from 'useValues' option
-function useValuesShip(ship, crew) {
-  ship = {
-    defId: ship.definitionId.split(":")[0],
-    rarity: ship.currentRarity,
-    level: ship.currentLevel,
-    skills: ship.skill.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; })
+function useValuesShip(unit, crewMember, useValues) {
+  if(useValues && !crewMember){
+    crewMember = gameData?.unitData[ req.params.baseID ]?.crew?.map( charID => { return {defId: charID}; })
+  }
+  let ship = {
+    defId: unit.definitionId.split(":")[0] || unit?.baseId,
+    rarity: unit.currentRarity,
+    level: unit.currentLevel,
+    skills: unit.skill.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; })
   };
-  crew = crew.map( c => {
+  let crew = crewMember?.map( c => {
     return {
-      defId: c.definitionId.split(":")[0],
+      defId: c.definitionId.split(":")[0] || c.baseId || c.defId,
       rarity: c.currentRarity,
       level: c.currentLevel,
       gear: c.currentTier,
@@ -664,7 +681,30 @@ function useValuesShip(ship, crew) {
       gp: c.gp
     };
   });
-  return {ship: ship, crew: crew};
+  if(!useValues) return {ship: ship, crew: crew};
+  let shipSkillLevel = useValues?.ship?.skills || 'max'
+  let modifiedShip = {
+    defId: ship.defId,
+    rarity: useValues.ship.rarity || ship.rarity,
+    level: useValues.ship.level || ship.level || 85,
+    skills: setSkills(ship.defId, shipSkillLevel || ship.skills)
+  }
+  let crewSkillLevel = useValues?.crew?.skills || 'max'
+  let chars = unitData[ ship.defId ]?.crew?.map( charID => {
+    let char = crew?.find( cmem => { return cmem.defId == charID} ); // extract defaults from submitted crew
+    char = {
+      defId: charID,
+      rarity: useValues.crew?.rarity || char?.rarity,
+      level: useValues.crew?.level || char?.level || 85,
+      gear: useValues.crew?.gear || char?.gear,
+      equipped: useValues?.crew?.equipped || char?.equipped,
+      skills: setSkills(charID, crewSkillLevel || char?.skills),
+      mods: useValues?.crew?.mods || char?.mods,
+      relic: useValues.crew.relic ? {currentTier: useValues.crew.relic } : char?.relic
+    };
+    return char;
+  });
+  return {ship: modifiedShip, crew: chars};
 }
 
 function setSkills( unitID, val ) {
@@ -679,5 +719,7 @@ function setSkills( unitID, val ) {
 }
 module.exports = {
   setGameData: setGameData,
-  calcRosterStats: calcRosterStats
+  calcRosterStats: calcRosterStats,
+  calcCharStats: calcCharStats,
+  calcShipStats: calcShipStats
 }
