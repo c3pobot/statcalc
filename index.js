@@ -27,7 +27,7 @@ function setGameData(gameData = {}){
   }
 }
 
-function calcRosterStats(units = []) {
+function calcRosterStats(units = [], options = {}) {
   try{
     let returnUnits = {}, totalGp = 0
     let dataCount = { mod: { r6: 0, 10: 0, 15: 0, 20: 0, 25: 0 }, gl: { total: 0 }, zeta: 0 }
@@ -48,7 +48,7 @@ function calcRosterStats(units = []) {
       } else { // is character
 
         crew[ defID ] = unit; // add to crew list to find quickly for ships
-         let unitStats = calcCharStats(unit);
+         let unitStats = calcCharStats(unit, options);
          if(!unitStats) return
          let tempUnit = formatUnit(defID, unitStats, dataCount, { unitDefMap: unitDefMap, statDefMap: statDefMap, modDefMap: modDefMap })
          if(!tempUnit) return
@@ -76,7 +76,7 @@ function calcRosterStats(units = []) {
       let defID = ship.defId || ship.definitionId.split(':')[0];
       if (!ship || !unitData[defID] || !unitDefMap[ defID ]) continue;
       let crw = unitData[ defID ].crew.map(id => crew[id])
-      let unitStats = calcShipStats(ship, crw);
+      let unitStats = calcShipStats(ship, crw, options);
       if(!unitStats) return
       let tempUnit = formatUnit(defID, unitStats, dataCount, {unitDefMap: unitDefMap})
       if(!tempUnit) return
@@ -630,7 +630,7 @@ function convertFlatCritAvoidToPercent(value, scale = 1) {
 // build character from 'useValues' option
 function useValuesChar(unit, useValues) {
   let char = {
-    defId: unit?.definitionId.split(":")[0] || unit?.baseId,
+    defId: unit?.definitionId?.split(":")[0] || unit?.baseId,
     rarity: unit?.currentRarity,
     level: unit?.currentLevel,
     gear: unit?.currentTier,
@@ -641,7 +641,7 @@ function useValuesChar(unit, useValues) {
     purchasedAbilityId: unit.purchasedAbilityId || []
     // TODO set purchasedAbilityId
   };
-  if(!useValues) return res
+  if(!useValues) return char
   let skillLevel = useValues?.char?.skills || 'max'
   let modifiedUnit = {
     defId: char.defId,
