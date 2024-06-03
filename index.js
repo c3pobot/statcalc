@@ -670,15 +670,15 @@ function useValuesShip(unit, crewMember, useValues) {
   };
   let crew = crewMember?.map( c => {
     return {
-      defId: c.definitionId.split(":")[0] || c.baseId || c.defId,
-      rarity: c.currentRarity,
-      level: c.currentLevel,
-      gear: c.currentTier,
-      equipped: c.equipment,
-      equippedStatMod: c.equippedStatMod,
-      relic: c.relic,
-      skills: c.skill.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; }),
-      gp: c.gp
+      defId: c?.definitionId?.split(":")[0] || c?.baseId || c?.defId,
+      rarity: c?.currentRarity,
+      level: c?.currentLevel,
+      gear: c?.currentTier,
+      equipped: c?.equipment,
+      equippedStatMod: c?.equippedStatMod,
+      relic: c?.relic,
+      skills: c?.skill?.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; }),
+      gp: c?.gp
     };
   });
   if(!useValues) return {ship: ship, crew: crew};
