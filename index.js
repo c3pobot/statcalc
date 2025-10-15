@@ -95,7 +95,7 @@ function calcRosterStats(units = [], options = {}) {
     quality.gear = calcGearQuality(units.filter(x=>x.combatType === 1), totalGp)
     quality.total = +(quality.gear + quality.mods).toFixed(2)
     dataCount.quality = quality
-    return { summary: dataCount, roster: returnUnits }
+    return { summary: dataCount, roster: returnUnits, rosterGp: totalGp }
   }catch(e){
     throw(e)
   }
