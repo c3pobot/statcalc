@@ -663,7 +663,7 @@ function useValuesShip(unit, crewMember, useValues) {
     crewMember = gameData?.unitData[ req.params.baseID ]?.crew?.map( charID => { return {defId: charID}; })
   }
   let ship = {
-    defId: unit.definitionId.split(":")[0] || unit?.baseId,
+    defId: unit.definitionId?.split(":")[0] || unit?.baseId,
     rarity: unit.currentRarity,
     level: unit.currentLevel,
     skills: unit.skill.map( skill => { return { id: skill.id, tier: skill.tier + 2 }; })
