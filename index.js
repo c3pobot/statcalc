@@ -64,7 +64,7 @@ function calcRosterStats(units = [], options = {}) {
          unit.baseId = defID
          unit.alignment = tempUnit.alignment
          unit.sort = tempUnit.sort
-         totalGp += tempUnit.gp
+         totalGp += +(tempUnit.gp || 0)
          if(unit.purchasedAbilityId?.length === 0) delete returnUnits [ defID ].ultimate
       }
     };
@@ -87,7 +87,7 @@ function calcRosterStats(units = [], options = {}) {
       ships[s].alignment = tempUnit.alignment
       ships[s].sort = tempUnit.sort
       ships[s].combatType = 2
-      totalGp += tempUnit.gp
+      totalGp += +(tempUnit.gp || 0)
     }
     let quality = {}
     quality.mods = calcModQuality(units.filter(x=>x.combatType === 1), 999)
