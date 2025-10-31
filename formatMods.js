@@ -41,6 +41,7 @@ function formatMods(mods, dataCount = {}, gameData = {}){
   let res = {}, len = mods.length, i = 0
   while(i < len){
     let mod = JSON.parse(JSON.stringify(gameData.modDefMap[mods[i].definitionId]))
+    mod.id = mods[i].id
     mod.statId = mods[i].primaryStat.stat.unitStatId
     mod.level = mods[i].level
     mod.tier = mods[i].tier
